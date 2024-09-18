@@ -9,6 +9,8 @@
 (define-constant ERR_INSUFFICIENT_BALANCE (err u104))
 (define-constant ERR_INVALID_PARAMETER (err u105))
 (define-constant ERR_TRANSFER_FAILED (err u106))
+(define-constant ERR_ALREADY_HAS_SCHEDULE (err u107))
+(define-constant ERR_INVALID_RECIPIENT (err u108))
 
 ;; Define data variables
 (define-data-var token-name (string-ascii 32) "")
@@ -59,6 +61,7 @@
   (begin
     (asserts! (is-eq tx-sender CONTRACT_OWNER) ERR_UNAUTHORIZED)
     (asserts! (var-get contract-initialized) ERR_NOT_INITIALIZED)
+    (asserts! (is-none (map-get? vesting-schedules participant)) ERR_ALREADY_HAS_SCHEDULE)
     (asserts! (> total-allocation u0) ERR_INVALID_PARAMETER)
     (asserts! (>= start-block block-height) ERR_INVALID_PARAMETER)
     (asserts! (>= vesting-duration cliff-duration) ERR_INVALID_PARAMETER)
@@ -130,11 +133,17 @@
     (sender tx-sender)
     (sender-balance (unwrap! (get-balance sender) ERR_INVALID_PARAMETER))
   )
+    (asserts! (and (not (is-eq sender recipient)) (not (is-eq recipient (as-contract tx-sender)))) ERR_INVALID_RECIPIENT)
     (asserts! (>= sender-balance amount) ERR_INSUFFICIENT_BALANCE)
-    (map-set token-balances sender (- sender-balance amount))
-    (map-set token-balances recipient 
-      (+ (default-to u0 (map-get? token-balances recipient)) amount)
-    )
+    (try! (as-contract (transfer-tokens sender recipient amount)))
+    (ok true)
+  )
+)
+
+(define-private (transfer-tokens (sender principal) (recipient principal) (amount uint))
+  (begin
+    (map-set token-balances sender (- (unwrap! (get-balance sender) ERR_INVALID_PARAMETER) amount))
+    (map-set token-balances recipient (+ (unwrap! (get-balance recipient) ERR_INVALID_PARAMETER) amount))
     (ok true)
   )
 )

@@ -1,70 +1,113 @@
-# Getting Started with Create React App
+# Vesting Contract
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Overview
 
-## Available Scripts
+This smart contract implements a token vesting mechanism on the Stacks blockchain. It allows for the creation of vesting schedules for participants, where tokens are gradually unlocked over time according to predefined parameters.
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+- Token initialization with customizable name, symbol, and decimals
+- Creation of vesting schedules for individual participants
+- Cliff and linear vesting periods
+- Token claiming for vested amounts
+- Transfer of claimed tokens
+- Querying of vesting schedules and vested amounts
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Contract Details
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- **Contract Language**: Clarity
+- **Blockchain**: Stacks
 
-### `npm test`
+## Functions
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Administrative Functions
 
-### `npm run build`
+1. `initialize(name, symbol, decimals)`
+   - Initializes the token contract with the given parameters
+   - Can only be called once by the contract owner
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+2. `create-vesting-schedule(participant, total-allocation, start-block, cliff-duration, vesting-duration, vesting-interval)`
+   - Creates a vesting schedule for a participant
+   - Can only be called by the contract owner
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### User Functions
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+1. `claim-vested-tokens()`
+   - Allows a participant to claim their vested tokens
+   - Transfers the claimable amount to the participant's balance
 
-### `npm run eject`
+2. `transfer(amount, recipient)`
+   - Transfers the specified amount of tokens to the recipient
+   - Can only be used for claimed tokens
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Read-Only Functions
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. `get-vested-amount(participant)`
+   - Returns the total vested amount for a participant
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+2. `get-balance(account)`
+   - Returns the token balance of an account
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+3. `get-total-supply()`
+   - Returns the total supply of tokens
 
-## Learn More
+4. `get-name()`
+   - Returns the token name
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+5. `get-symbol()`
+   - Returns the token symbol
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+6. `get-decimals()`
+   - Returns the number of decimal places for the token
 
-### Code Splitting
+7. `get-vesting-schedule(participant)`
+   - Returns the vesting schedule details for a participant
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+8. `is-initialized()`
+   - Returns whether the contract has been initialized
 
-### Analyzing the Bundle Size
+## Deployment
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+To deploy this contract:
 
-### Making a Progressive Web App
+1. Ensure you have the Stacks CLI installed and configured
+2. Deploy the contract using the Stacks CLI:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+   ```
+   stx deploy /path/to/vesting-contract.clar --network [mainnet/testnet]
+   ```
 
-### Advanced Configuration
+3. Once deployed, initialize the contract by calling the `initialize` function with appropriate parameters
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Interacting with the Contract
 
-### Deployment
+You can interact with the contract using the Stacks CLI, the Stacks API, or through a web interface built using the `@stacks/transactions` library.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+### Example: Creating a Vesting Schedule
 
-### `npm run build` fails to minify
+```javascript
+import { makeContractCall, standardPrincipalCV, uintCV, PostConditionMode } from '@stacks/transactions';
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+const txOptions = {
+  contractAddress: 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9',
+  contractName: 'vesting-contract',
+  functionName: 'create-vesting-schedule',
+  functionArgs: [
+    standardPrincipalCV('SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9'),
+    uintCV(1000000), // total allocation
+    uintCV(100000),  // start block
+    uintCV(10000),   // cliff duration
+    uintCV(50000),   // vesting duration
+    uintCV(1000)     // vesting interval
+  ],
+
+
+## Security Considerations
+
+1. Ensure that only authorized addresses can call administrative functions
+2. Verify that vesting schedules cannot be altered once created
+3. Implement proper access controls for token transfers
+4. Consider adding emergency functions (e.g., pause mechanism) for critical situations
+5. Thoroughly test all functions, including edge cases
+6. Consider getting a professional audit before deploying with significant value
+

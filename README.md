@@ -1,4 +1,4 @@
-ting Smart Contract
+Smart Contract
 
 ## Overview
 
